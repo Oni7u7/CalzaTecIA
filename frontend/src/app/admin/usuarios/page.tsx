@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { TablaUsuarios } from '@/components/admin/TablaUsuarios'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -8,15 +8,61 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Users, UserPlus, GraduationCap, PieChart } from 'lucide-react'
+import { Users, UserPlus, GraduationCap, PieChart, Loader2 } from 'lucide-react'
 import { ESTRUCTURA_ORGANIZACIONAL, Usuario } from '@/lib/orgData'
 import { useRouter } from 'next/navigation'
-import { crearUsuario } from '@/lib/supabase/usuarios'
+import { crearUsuario, UsuarioCompleto, obtenerRoles, Rol } from '@/lib/supabase/usuarios'
+import { useUsuarios } from '@/hooks/useUsuarios'
+
+// Función helper para convertir UsuarioCompleto (Supabase) a Usuario (orgData)
+function convertirUsuarioSupabaseAOrgData(usuarioSupabase: UsuarioCompleto): Usuario {
+  // Generar un ID numérico único basado en el hash del string ID
+  const idNumerico = usuarioSupabase.id.split('-').reduce((acc, val) => acc + parseInt(val.slice(0, 2), 16), 0) % 1000000
+  
+  return {
+    id: idNumerico,
+    nombre: usuarioSupabase.nombre,
+    email: usuarioSupabase.email,
+    rol: usuarioSupabase.rol?.nombre || 'sin_rol',
+    supervisor_id: usuarioSupabase.supervisor_id 
+      ? usuarioSupabase.supervisor_id.split('-').reduce((acc, val) => acc + parseInt(val.slice(0, 2), 16), 0) % 1000000
+      : null,
+    tienda: usuarioSupabase.tienda?.nombre || 'Sin tienda'
+  }
+}
 
 export default function UsuariosPage() {
   const router = useRouter()
-  const [usuarios, setUsuarios] = useState<Usuario[]>(ESTRUCTURA_ORGANIZACIONAL.usuarios_demo)
+  const { usuarios: usuariosSupabase, loading, error, refetch } = useUsuarios({ activo: true })
   const [modalAbierto, setModalAbierto] = useState(false)
+  const [roles, setRoles] = useState<Rol[]>([])
+  const [loadingRoles, setLoadingRoles] = useState(false)
+  
+  // Cargar roles al montar el componente
+  useEffect(() => {
+    const cargarRoles = async () => {
+      setLoadingRoles(true)
+      try {
+        const rolesData = await obtenerRoles()
+        setRoles(rolesData)
+      } catch (err) {
+        console.error('Error al cargar roles:', err)
+      } finally {
+        setLoadingRoles(false)
+      }
+    }
+    cargarRoles()
+  }, [])
+  
+  // Convertir usuarios de Supabase al formato esperado por TablaUsuarios
+  const usuarios = useMemo(() => {
+    if (usuariosSupabase.length === 0) {
+      // Si no hay usuarios de Supabase, usar datos demo como fallback
+      return ESTRUCTURA_ORGANIZACIONAL.usuarios_demo
+    }
+    return usuariosSupabase.map(convertirUsuarioSupabaseAOrgData)
+  }, [usuariosSupabase])
+  
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
@@ -86,9 +132,8 @@ export default function UsuariosPage() {
           supervisor_id: '',
           tienda_id: ''
         })
-        // Recargar lista de usuarios
-        const nuevosUsuarios = [...usuarios, usuarioCreado as Usuario]
-        setUsuarios(nuevosUsuarios)
+        // Recargar usuarios desde Supabase
+        await refetch()
       } else {
         alert('Error al crear usuario')
       }
@@ -96,6 +141,34 @@ export default function UsuariosPage() {
       console.error('Error al crear usuario:', error)
       alert('Error al crear usuario')
     }
+  }
+
+  // Mostrar estado de carga
+  if (loading && usuarios.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-teal-400)' }} />
+          <p className="text-sm" style={{ color: 'var(--color-neutral-300)' }}>Cargando usuarios...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Mostrar error si hay
+  if (error && usuarios.length === 0) {
+    return (
+      <div className="space-y-4 sm:space-y-6 max-w-full overflow-x-hidden">
+        <div className="admin-stat-card">
+          <div className="p-6">
+            <p className="text-red-500">Error al cargar usuarios: {error}</p>
+            <Button onClick={() => refetch()} className="mt-4">
+              Reintentar
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -148,11 +221,19 @@ export default function UsuariosPage() {
                       <SelectValue placeholder="Selecciona un rol" />
                     </SelectTrigger>
                     <SelectContent>
-                      {ESTRUCTURA_ORGANIZACIONAL.roles.map((rol) => (
-                        <SelectItem key={rol.id} value={rol.id.toString()}>
-                          {rol.nombre === 'comprador' ? 'Comprador' : rol.nombre.replace(/_/g, ' ')}
-                        </SelectItem>
-                      ))}
+                      {roles.length > 0 ? (
+                        roles.map((rol) => (
+                          <SelectItem key={rol.id} value={rol.id}>
+                            {rol.nombre === 'comprador' ? 'Comprador' : rol.nombre.replace(/_/g, ' ')}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        ESTRUCTURA_ORGANIZACIONAL.roles.map((rol) => (
+                          <SelectItem key={rol.id} value={rol.id.toString()}>
+                            {rol.nombre === 'comprador' ? 'Comprador' : rol.nombre.replace(/_/g, ' ')}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -163,8 +244,8 @@ export default function UsuariosPage() {
                       <SelectValue placeholder="Selecciona un supervisor" />
                     </SelectTrigger>
                     <SelectContent>
-                      {usuarios.map((u) => (
-                        <SelectItem key={u.id} value={u.id.toString()}>
+                      {usuariosSupabase.map((u) => (
+                        <SelectItem key={u.id} value={u.id}>
                           {u.nombre}
                         </SelectItem>
                       ))}
