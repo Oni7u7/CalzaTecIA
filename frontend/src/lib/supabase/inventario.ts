@@ -76,14 +76,15 @@ export async function obtenerInventarioTienda(
       query = query.eq('estado', opciones.estado)
     }
 
-    if (opciones?.bajo_stock) {
-      query = query.lte('cantidad', supabase.raw('cantidad_minima'))
-    }
+    // Nota: bajo_stock se filtra después de obtener los datos
+    // porque Supabase no permite comparar columnas directamente en la query
 
-    if (opciones?.limite) {
+    if (opciones?.limite && !opciones?.bajo_stock) {
+      // Solo aplicar límite si no necesitamos filtrar por bajo_stock
+      // porque el filtro de bajo_stock puede reducir los resultados
       query = query.limit(opciones.limite)
     }
-    if (opciones?.offset) {
+    if (opciones?.offset && !opciones?.bajo_stock) {
       query = query.range(opciones.offset, opciones.offset + (opciones.limite || 50) - 1)
     }
 
@@ -96,15 +97,28 @@ export async function obtenerInventarioTienda(
       throw error
     }
 
+    // Filtrar por bajo_stock si se especifica (comparar cantidad con cantidad_minima)
+    let filteredData = data || []
+    if (opciones?.bajo_stock) {
+      filteredData = filteredData.filter((item: InventarioConProducto) => 
+        item.cantidad <= item.cantidad_minima
+      )
+      // Aplicar límite y offset después del filtro
+      if (opciones?.offset) {
+        filteredData = filteredData.slice(opciones.offset, opciones.offset + (opciones.limite || filteredData.length))
+      } else if (opciones?.limite) {
+        filteredData = filteredData.slice(0, opciones.limite)
+      }
+    }
+
     // Filtrar por categoría si se especifica
-    let inventario = data || []
     if (opciones?.categoria) {
-      inventario = inventario.filter(
-        (item: any) => item.producto?.categoria === opciones.categoria
+      filteredData = filteredData.filter(
+        (item: InventarioConProducto) => item.producto?.categoria === opciones.categoria
       )
     }
 
-    return inventario
+    return filteredData as InventarioConProducto[]
   } catch (error) {
     console.error('Error en obtenerInventarioTienda:', error)
     return []
