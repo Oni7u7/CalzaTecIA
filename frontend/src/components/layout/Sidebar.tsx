@@ -16,13 +16,24 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { LucideIcon } from 'lucide-react'
 
 interface SidebarProps {
   isOpen: boolean
   role?: 'admin' | 'vendedor' | 'cliente'
 }
 
-const navigationAdmin = [
+interface NavigationItem {
+  name: string
+  icon: LucideIcon
+  path: string
+  color: string
+  bgColor: string
+  badge?: string
+  highlight?: boolean
+}
+
+const navigationAdmin: NavigationItem[] = [
   {
     name: 'Dashboard',
     icon: Home,
@@ -83,7 +94,7 @@ const navigationAdmin = [
   },
 ]
 
-const navigationVendedor = [
+const navigationVendedor: NavigationItem[] = [
   { name: 'Dashboard', icon: Home, path: '/vendedor', color: 'text-green-500', bgColor: 'bg-green-50 dark:bg-green-500/10' },
   { name: 'Mi Perfil', icon: Users, path: '/vendedor/perfil', color: 'text-blue-500', bgColor: 'bg-blue-50 dark:bg-blue-500/10' },
   { name: 'Inventario', icon: Package, path: '/vendedor/inventario', color: 'text-cyan-500', bgColor: 'bg-cyan-50 dark:bg-cyan-500/10' },
