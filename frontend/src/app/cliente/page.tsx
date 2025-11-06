@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { Search, Filter, ShoppingCart, X, Sparkles, Zap, Star } from 'lucide-react'
 import { ItemCarrito, calcularTotal, generarNumeroTicket, guardarVenta } from '@/lib/pos'
 import { useProductos } from '@/hooks/useProductos'
-import { Producto as ProductoBD } from '@/lib/productos'
+import { ProductoConInventario } from '@/lib/productos'
 import { crearVenta } from '@/lib/supabase/ventas'
 
 interface Producto {
@@ -44,7 +44,7 @@ export default function POSPage() {
   useEffect(() => {
     if (productosBD && productosBD.length > 0) {
       // Convertir productos de BD al formato del componente
-      const productosConvertidos = productosBD.map((p: ProductoBD) => ({
+      const productosConvertidos = productosBD.map((p: ProductoConInventario) => ({
         id: p.id,
         sku: p.sku,
         nombre: p.nombre,
