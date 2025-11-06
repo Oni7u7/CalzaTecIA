@@ -1,4 +1,4 @@
-# 🛍️ ZAPATAVIVE - Sistema de Gestión Retail con IA
+# 🛍️ CalzaTecIA - Sistema de Gestión Retail con IA
 
 **Sistema integral de gestión para la cadena de tiendas "Calzando a México"**
 
