@@ -1,0 +1,184 @@
+/* Estilos de impresión */
+
+@media print {
+  /* Ocultar elementos no necesarios */
+  header,
+  nav,
+  footer,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Configuración de página */
+  @page {
+    size: A4;
+    margin: 2cm;
+  }
+
+  /* Estilos generales */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  /* Títulos */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: black !important;
+    page-break-after: avoid;
+  }
+
+  /* Tablas */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    page-break-inside: avoid;
+  }
+
+  table th,
+  table td {
+    border: 1px solid #000;
+    padding: 8px;
+  }
+
+  table th {
+    background: #f3f4f6 !important;
+    color: black !important;
+    font-weight: bold;
+  }
+
+  /* Cards */
+  .card {
+    border: 1px solid #000;
+    page-break-inside: avoid;
+    margin-bottom: 1cm;
+  }
+
+  /* Gráficas - Convertir a escala de grises */
+  svg,
+  canvas {
+    max-width: 100%;
+    height: auto;
+    filter: grayscale(100%);
+  }
+
+  /* Saltos de página */
+  .page-break {
+    page-break-before: always;
+  }
+
+  /* No romper dentro de estos elementos */
+  .no-break {
+    page-break-inside: avoid;
+  }
+
+  /* Headers y footers en cada página */
+  @page {
+    @top-center {
+      content: 'Calzando a México - Sistema de Gestión';
+      font-size: 10pt;
+      color: #666;
+    }
+    @bottom-center {
+      content: 'Página ' counter(page) ' de ' counter(pages);
+      font-size: 10pt;
+      color: #666;
+    }
+  }
+
+  /* Estilos para reportes */
+  .report-header {
+    text-align: center;
+    margin-bottom: 2cm;
+    border-bottom: 2px solid #000;
+    padding-bottom: 1cm;
+  }
+
+  .report-header h1 {
+    font-size: 24pt;
+    margin-bottom: 0.5cm;
+  }
+
+  .report-header .date {
+    font-size: 10pt;
+    color: #666;
+  }
+
+  /* Índice */
+  .table-of-contents {
+    page-break-after: always;
+  }
+
+  .table-of-contents h2 {
+    font-size: 18pt;
+    margin-bottom: 1cm;
+  }
+
+  .table-of-contents ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .table-of-contents li {
+    margin-bottom: 0.5cm;
+  }
+
+  /* Resumen ejecutivo */
+  .executive-summary {
+    background: #f9fafb;
+    border: 2px solid #000;
+    padding: 1cm;
+    margin-bottom: 2cm;
+    page-break-inside: avoid;
+  }
+
+  /* Gráficas grandes para impresión */
+  .print-chart {
+    width: 100%;
+    height: 10cm;
+    page-break-inside: avoid;
+  }
+
+  /* Comentarios y análisis */
+  .analysis-section {
+    margin-top: 2cm;
+    page-break-inside: avoid;
+  }
+
+  .analysis-section h3 {
+    font-size: 14pt;
+    margin-bottom: 0.5cm;
+    border-bottom: 1px solid #000;
+    padding-bottom: 0.25cm;
+  }
+
+  /* Evitar colores de fondo */
+  * {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Links - mostrar URL */
+  a[href]:after {
+    content: ' (' attr(href) ')';
+    font-size: 9pt;
+    color: #666;
+  }
+
+  /* Imágenes */
+  img {
+    max-width: 100%;
+    height: auto;
+    filter: grayscale(100%);
+  }
+}
+
+
+
