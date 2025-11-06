@@ -25,7 +25,7 @@ export function TourGuided({ steps, tourKey, onComplete }: TourGuidedProps) {
 
   const handleJoyrideCallback = (data: CallBackProps) => {
     const { status } = data
-    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       localStorage.setItem(`tour_${tourKey}_completed`, 'true')
       setRun(false)
       onComplete?.()
