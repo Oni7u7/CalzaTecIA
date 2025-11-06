@@ -30,9 +30,14 @@ const schemaFormularioUsuario = z.object({
     .regex(/[0-9]/, 'Debe incluir al menos un número'),
 })
 
+// Tipo extendido para incluir password en el formulario
+type UsuarioConPassword = Usuario & {
+  password?: string
+}
+
 interface FormularioUsuarioProps {
   usuario?: Usuario | null
-  onSave: (usuario: Partial<Usuario>) => void
+  onSave: (usuario: Partial<UsuarioConPassword>) => void
   onCancel: () => void
 }
 
@@ -86,7 +91,7 @@ export function FormularioUsuario({ usuario, onSave, onCancel }: FormularioUsuar
   }, [rol, usuario, setValue])
 
   const onSubmit = (data: z.infer<typeof schemaFormularioUsuario>) => {
-    const usuarioData: Partial<Usuario> = {
+    const usuarioData: Partial<UsuarioConPassword> = {
       nombre: data.nombre,
       email: data.email,
       rol: data.rol as Usuario['rol'],
