@@ -429,7 +429,6 @@ export async function obtenerAlertasInventario(tiendaId?: string): Promise<Inven
         tienda:tiendas(*)
       `)
       .eq('estado', 'disponible')
-      .lte('cantidad', supabase.raw('cantidad_minima'))
 
     if (tiendaId) {
       query = query.eq('tienda_id', tiendaId)
@@ -442,7 +441,13 @@ export async function obtenerAlertasInventario(tiendaId?: string): Promise<Inven
       throw error
     }
 
-    return data || []
+    // Filtrar por bajo stock (cantidad <= cantidad_minima) después de obtener los datos
+    // porque Supabase no permite comparar columnas directamente en la query
+    const alertas = (data || []).filter((item: InventarioConProducto) => 
+      item.cantidad <= item.cantidad_minima
+    )
+
+    return alertas
   } catch (error) {
     console.error('Error en obtenerAlertasInventario:', error)
     return []
