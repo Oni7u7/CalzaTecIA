@@ -11,11 +11,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Users, UserPlus, GraduationCap, PieChart } from 'lucide-react'
 import { ESTRUCTURA_ORGANIZACIONAL, Usuario } from '@/lib/orgData'
 import { useRouter } from 'next/navigation'
+import { crearUsuario } from '@/lib/supabase/usuarios'
 
 export default function UsuariosPage() {
   const router = useRouter()
   const [usuarios, setUsuarios] = useState<Usuario[]>(ESTRUCTURA_ORGANIZACIONAL.usuarios_demo)
   const [modalAbierto, setModalAbierto] = useState(false)
+  const [formData, setFormData] = useState({
+    nombre: '',
+    email: '',
+    password: '',
+    rol_id: '',
+    supervisor_id: '',
+    tienda_id: ''
+  })
 
   const totalUsuarios = usuarios.length
   const usuariosActivos = usuarios.length // Por ahora todos están activos
@@ -43,14 +52,14 @@ export default function UsuariosPage() {
     }
   }
 
-  const handleCrearUsuario = async (formData: {
-    nombre: string
-    email: string
-    password: string
-    rol_id?: string
-    supervisor_id?: string
-    tienda_id?: string
-  }) => {
+  const handleCrearUsuario = async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    
+    if (!formData.nombre || !formData.email || !formData.password) {
+      alert('Por favor completa todos los campos requeridos')
+      return
+    }
+
     try {
       // Hash de contraseña (en producción usar bcrypt)
       const passwordHash = formData.password // Por ahora sin hash, se debe implementar
@@ -68,7 +77,18 @@ export default function UsuariosPage() {
       if (usuarioCreado) {
         alert('Usuario creado exitosamente')
         setModalAbierto(false)
-        refetch() // Recargar lista
+        // Limpiar formulario
+        setFormData({
+          nombre: '',
+          email: '',
+          password: '',
+          rol_id: '',
+          supervisor_id: '',
+          tienda_id: ''
+        })
+        // Recargar lista de usuarios
+        const nuevosUsuarios = [...usuarios, usuarioCreado as Usuario]
+        setUsuarios(nuevosUsuarios)
       } else {
         alert('Error al crear usuario')
       }
@@ -100,25 +120,36 @@ export default function UsuariosPage() {
                 Completa el formulario para crear un nuevo usuario en el sistema
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 mt-4">
+            <form onSubmit={handleCrearUsuario} className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label>Nombre Completo</Label>
-                <Input placeholder="Nombre completo del usuario" />
+                <Input 
+                  placeholder="Nombre completo del usuario"
+                  value={formData.nombre}
+                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label>Email</Label>
-                <Input type="email" placeholder="usuario@calzando.com" />
+                <Input 
+                  type="email" 
+                  placeholder="usuario@calzando.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Rol</Label>
-                  <Select>
+                  <Select value={formData.rol_id} onValueChange={(value) => setFormData({ ...formData, rol_id: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona un rol" />
                     </SelectTrigger>
                     <SelectContent>
                       {ESTRUCTURA_ORGANIZACIONAL.roles.map((rol) => (
-                        <SelectItem key={rol.id} value={rol.nombre}>
+                        <SelectItem key={rol.id} value={rol.id.toString()}>
                           {rol.nombre === 'comprador' ? 'Comprador' : rol.nombre.replace(/_/g, ' ')}
                         </SelectItem>
                       ))}
@@ -127,7 +158,7 @@ export default function UsuariosPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Supervisor</Label>
-                  <Select>
+                  <Select value={formData.supervisor_id} onValueChange={(value) => setFormData({ ...formData, supervisor_id: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona un supervisor" />
                     </SelectTrigger>
@@ -143,16 +174,26 @@ export default function UsuariosPage() {
               </div>
               <div className="space-y-2">
                 <Label>Tienda Asignada</Label>
-                <Input placeholder="Nombre de la tienda" />
+                <Input 
+                  placeholder="ID de la tienda"
+                  value={formData.tienda_id}
+                  onChange={(e) => setFormData({ ...formData, tienda_id: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Contraseña Temporal</Label>
-                <Input type="password" placeholder="Contraseña temporal" />
+                <Input 
+                  type="password" 
+                  placeholder="Contraseña temporal"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  required
+                />
               </div>
-              <Button onClick={handleCrearUsuario} className="w-full">
+              <Button type="submit" className="w-full">
                 Crear Usuario
               </Button>
-            </div>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
